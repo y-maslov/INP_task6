@@ -29,20 +29,6 @@ Double_t Get_gamma_from_E(Double_t E, Double_t m)
     return E / (m);
 }
 
-Double_t one_minus_xx_rndm()
-{
-   Int_t n = 1000;
-
-   for (int i = 0; i < n; i ++)
-   {
-    Double_t x = gRandom->Rndm() * 2 - 1;
-    Double_t y = gRandom->Rndm();
-    if (y <= 1 - x * x) return x;
-   }
-   return 0;
-}
-
- 
 
 void task6()
 {
@@ -67,7 +53,6 @@ void task6()
     {
     
         // генерация Ks (Kl) в ЛСО 
-        //Double_t theta_K = TMath :: ACos(one_minus_xx_rndm());
         Double_t theta_K = func->GetRandom(); 
         Double_t phi_K = gRandom->Rndm() * 2 * TMath :: Pi(); 
 
@@ -79,22 +64,12 @@ void task6()
 
 
         // поворот 4-х вектора Ks на сгенерированное направление
-       
-        //TLorentzRotation right_dir_of_Ks; 
-        // right_dir_of_Ks.RotateZ(phi_K);
-        // right_dir_of_Ks.RotateY(theta_K);
-        // Ks = right_dir_of_Ks * Ks;
-
         Ks.SetPhi(phi_K);
         Ks.SetTheta(theta_K);
         
         Ks_polar->Fill(Ks.Theta());
         Ks_azimuthal->Fill(Ks.Phi());
 
-        //Ks_decay =  right_dir_of_Ks * Ks_decay;
-        
-
-        
         TLorentzVector  Kl = Ks; 
         Kl.RotateZ(TMath::Pi());
 
@@ -104,7 +79,6 @@ void task6()
         from_lab_to_Ks.Boost(-Ks.BoostVector());
         Ks = from_lab_to_Ks * Ks;
         Double_t new_full_energy_MeV = Ks.E();
-        //std :: cout << Ks.X() << std :: endl;
         
 
         // генерация pi+ (-) в системе Ks
@@ -126,19 +100,6 @@ void task6()
         pi_decay_minus.Boost(pi_plus.BoostVector());
     
         // поворот 4-х вектора pi на сгенерированное направление
-        // TLorentzRotation right_dir_of_pi;
-        // right_dir_of_pi.RotateZ(phi_pi);
-        // right_dir_of_pi.RotateX(theta_pi);
-
-       
-
-        // TLorentzRotation right_dir_of_pi_minus;
-        // right_dir_of_pi_minus.RotateZ(phi_pi);
-        // right_dir_of_pi_minus.RotateX(-theta_pi);
-
-        // pi_decay_plus = right_dir_of_pi * pi_decay_plus;
-        // pi_decay_minus = right_dir_of_pi_minus * pi_decay_minus;
-        // pi_plus = right_dir_of_pi * pi_plus;
 
         pi_decay_plus.SetPhi(phi_pi);
         pi_decay_plus.SetTheta(theta_pi);
@@ -156,8 +117,6 @@ void task6()
        pi_minus[1] = - pi_plus[1];
        pi_minus[2] = - pi_plus[2];
        pi_minus[3] =  pi_plus[3];
-       // std :: cout <<  pi_minus[3] + pi_plus[3] << std::endl;
-      //  std :: cout <<  Ks[1] << std::endl;
 
 
         // перевод векторов в ЛСО
@@ -175,10 +134,7 @@ void task6()
 
 
         Ks_flyL->Fill(TMath :: Power(Ks_decay.X() * Ks_decay.X() + Ks_decay.Y() * Ks_decay.Y() + Ks_decay.Z() * Ks_decay.Z(), 0.5));
-        //std :: cout << TMath :: Power(Ks_decay.X() * Ks_decay.X() + Ks_decay.Y() * Ks_decay.Y() + Ks_decay.Z() * Ks_decay.Z(), 0.5) << std :: endl;
-        //std :: cout << Kl.E() + pi_minus.E() + pi_plus.E() << std :: endl;
-        // std :: cout << pi_plus.P()<< std :: endl;
-        // std :: cout << pi_decay_plus.Theta() << std :: endl;
+
 
         Double_t pi_plus_P_transverse = TMath::Sqrt(pi_plus.Px() * pi_plus.Px() + pi_plus.Py() * pi_plus.Py());
         Double_t pi_minus_P_transverse = TMath::Sqrt(pi_minus.Px() * pi_minus.Px() + pi_minus.Py() * pi_minus.Py());
