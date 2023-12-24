@@ -49,7 +49,7 @@ void task6()
     auto c = new TCanvas("task6_pi", "task6_pi", 1000, 1000);
     auto c1 = new TCanvas("task6_Ks", "task6_Ks", 1000, 1000);
     c->Divide(4, 1);
-    c1->Divide(4, 1);
+    c1->Divide(2, 1);
     auto Ks_polar = new TH1D("Ks_polar", "Ks_polar", 50, 0, TMath :: Pi());
     auto Ks_azimuthal = new TH1D("Ks_azimuthal", "Ks_azimuthal", 50, -TMath::Pi(), TMath :: Pi());
 
@@ -104,7 +104,7 @@ void task6()
         from_lab_to_Ks.Boost(-Ks.BoostVector());
         Ks = from_lab_to_Ks * Ks;
         Double_t new_full_energy_MeV = Ks.E();
-        std :: cout << Ks.X() << std :: endl;
+        //std :: cout << Ks.X() << std :: endl;
         
 
         // генерация pi+ (-) в системе Ks
@@ -148,7 +148,7 @@ void task6()
         pi_plus.SetTheta(theta_pi);
 
         //Заполнение гистограммы в системе Ks 
-        pi_polar_Ks_hist->Fill(pi_plus.Phi());
+        pi_polar_Ks_hist->Fill(pi_plus.Theta());
 
         
        TLorentzVector pi_minus;
@@ -179,10 +179,15 @@ void task6()
         //std :: cout << Kl.E() + pi_minus.E() + pi_plus.E() << std :: endl;
         // std :: cout << pi_plus.P()<< std :: endl;
         // std :: cout << pi_decay_plus.Theta() << std :: endl;
-        if (((TMath::Sqrt(pi_plus.Px() * pi_plus.Px() + pi_plus.Py() * pi_plus.Py()) > 40) &&
-        pi_plus.Theta() > TMath::ATan(detector_R / (detector_L - Ks_decay.X() - pi_decay_plus.X()))) &&
-        ((TMath::Sqrt(pi_minus.Px() * pi_minus.Px() + pi_minus.Py() * pi_minus.Py()) > 40) &&
-        pi_minus.Theta() > TMath::ATan(detector_R / (detector_L - Ks_decay.X() - pi_decay_minus.X())))) cnt ++; 
+
+        Double_t pi_plus_P_transverse = TMath::Sqrt(pi_plus.Px() * pi_plus.Px() + pi_plus.Py() * pi_plus.Py());
+        Double_t pi_minus_P_transverse = TMath::Sqrt(pi_minus.Px() * pi_minus.Px() + pi_minus.Py() * pi_minus.Py());
+        Double_t Ks_decay_transverse =  TMath::Sqrt(Ks_decay.X() * Ks_decay.X() + Ks_decay.Y() * Ks_decay.Y());
+        Double_t pi_decay_plus_transverse = TMath::Sqrt(pi_decay_plus.X() * pi_decay_plus.X() + pi_decay_plus.Y() * pi_decay_plus.Y());
+        Double_t pi_decay_minus_transverse = TMath::Sqrt(pi_decay_minus.X() * pi_decay_minus.X() + pi_decay_minus.Y() * pi_decay_minus.Y());
+
+        if (((pi_plus_P_transverse > 40) && pi_plus.Theta() > TMath::ATan(detector_R / (detector_L - Ks_decay_transverse - pi_decay_plus_transverse))) &&
+        ((pi_minus_P_transverse > 40) && pi_minus.Theta() > TMath::ATan(detector_R / (detector_L - Ks_decay_transverse - pi_decay_minus_transverse)))) cnt ++; 
         
 
     }
