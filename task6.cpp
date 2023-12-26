@@ -13,7 +13,7 @@ const Double_t full_energy_MeV = 1020;
 const Double_t e_mass_MeV = 0.51099895;
 const Double_t K_mass_MeV = 497.611;
 const Double_t pi_mass_MeV = 139.57039;
-const Int_t N = 3000;
+const Int_t N = 1000;
 const Double_t pi_ctau = 7.8045; // метры
 const Double_t K_ctau = 0.026; // метры
 const Double_t detector_R = 0.3; // метры
@@ -28,6 +28,7 @@ Double_t Get_gamma_from_E(Double_t E, Double_t m)
 {
     return E / (m);
 }
+
 
 
 void task6()
@@ -47,31 +48,42 @@ void task6()
     auto pi_azimuthal_ls_hist = new TH1D("pi_azimuthal_ls", "pi_azimuthal_ls", 50, -TMath::Pi(), TMath :: Pi());
     Int_t cnt = 0;
 
+
     TF1 *func = new TF1("f", "(sin(x))^3", 0, TMath::Pi());
+    TF1 *ctau_func = new TF1("ctau_f", "exp(-x/[0])", 0, 50);
+
+
 
     for (Int_t i = 0; i < N; i ++)
     {
-    
+        std::cout << i << "'s iteration has started" << std::endl;
+        
         // генерация Ks (Kl) в ЛСО 
+
         Double_t theta_K = func->GetRandom(); 
         Double_t phi_K = gRandom->Rndm() * 2 * TMath :: Pi(); 
 
         Double_t Ks_px = Get_px_from_E(full_energy_MeV / 2., K_mass_MeV); 
         TLorentzVector  Ks(Ks_px, 0, 0, full_energy_MeV / 2.);
-        TLorentzVector  Ks_decay(0, 0, 0, K_ctau);
-        while (gRandom->Rndm() > 0.5) Ks_decay[3] += K_ctau;
+        ctau_func->SetParameter(0, K_ctau);
+        TLorentzVector  Ks_decay(0, 0, 0, ctau_func->GetRandom());
+       
         
 
 
         // поворот 4-х вектора Ks на сгенерированное направление
+
         Ks.SetPhi(phi_K);
         Ks.SetTheta(theta_K);
         
         Ks_polar->Fill(Ks.Theta());
         Ks_azimuthal->Fill(Ks.Phi());
 
+        std :: cout << "Ks in lab frame before boosts: {" << Ks[0] << ", " << Ks[1] << ", " << Ks[2] << ", " << Ks[3] << "}" << std :: endl;
+
         TLorentzVector  Kl = Ks; 
         Kl.RotateZ(TMath::Pi());
+        
 
         // переход в систему отчета Ks
         Ks_decay.Boost(Ks.BoostVector());
@@ -79,7 +91,8 @@ void task6()
         from_lab_to_Ks.Boost(-Ks.BoostVector());
         Ks = from_lab_to_Ks * Ks;
         Double_t new_full_energy_MeV = Ks.E();
-        
+
+        std :: cout << "Ks in Ks frame: {" << Ks[0] << ", " << Ks[1] << ", " << Ks[2] << ", " << Ks[3] << "}" << std :: endl;
 
         // генерация pi+ (-) в системе Ks
         Double_t theta_pi = TMath :: ACos(gRandom->Rndm() * 2 - 1);
@@ -88,18 +101,18 @@ void task6()
         Double_t pi_plus_px = Get_px_from_E(new_full_energy_MeV / 2., pi_mass_MeV); 
         TLorentzVector  pi_plus(pi_plus_px, 0, 0, new_full_energy_MeV / 2.);
 
+        
+        
 
         // время жизни
-        TLorentzVector  pi_decay_plus(0, 0, 0, pi_ctau);
-         while (gRandom->Rndm() > 0.5) pi_decay_plus[3] += pi_ctau;
-        
-        TLorentzVector  pi_decay_minus(0, 0, 0, pi_ctau);
-         while (gRandom->Rndm() > 0.5) pi_decay_minus[3] += pi_ctau;
+        ctau_func->SetParameter(0, pi_ctau);
+        TLorentzVector  pi_decay_plus(0, 0, 0, ctau_func->GetRandom()); 
+        TLorentzVector  pi_decay_minus(0, 0, 0, ctau_func->GetRandom());
         
         pi_decay_plus.Boost(pi_plus.BoostVector());
         pi_decay_minus.Boost(pi_plus.BoostVector());
     
-        // поворот 4-х вектора pi на сгенерированное направление
+
 
         pi_decay_plus.SetPhi(phi_pi);
         pi_decay_plus.SetTheta(theta_pi);
@@ -117,6 +130,8 @@ void task6()
        pi_minus[1] = - pi_plus[1];
        pi_minus[2] = - pi_plus[2];
        pi_minus[3] =  pi_plus[3];
+       std :: cout << "Pi_minus Pi_plus summ in Ks frame: {" << pi_minus[0] + pi_plus[0] << ", " << pi_minus[1] + pi_plus[1] << ", " << pi_minus[2] + pi_plus[2] << ", " << pi_minus[3] + pi_plus[3] << "}"<< std::endl;
+
 
 
         // перевод векторов в ЛСО
@@ -135,6 +150,8 @@ void task6()
 
         Ks_flyL->Fill(TMath :: Power(Ks_decay.X() * Ks_decay.X() + Ks_decay.Y() * Ks_decay.Y() + Ks_decay.Z() * Ks_decay.Z(), 0.5));
 
+        std :: cout << "Ks in lab frame after boosts: {" << Ks[0] << ", " << Ks[1] << ", " << Ks[2] << ", " << Ks[3] << "}" << std :: endl;
+        std :: cout << "Pi_minus Pi_plus summ in lab frame: {" << pi_minus[0] + pi_plus[0] << ", " << pi_minus[1] + pi_plus[1] << ", " << pi_minus[2] + pi_plus[2] << ", " << pi_minus[3] + pi_plus[3] << "}"<< std::endl;
 
         Double_t pi_plus_P_transverse = TMath::Sqrt(pi_plus.Px() * pi_plus.Px() + pi_plus.Py() * pi_plus.Py());
         Double_t pi_minus_P_transverse = TMath::Sqrt(pi_minus.Px() * pi_minus.Px() + pi_minus.Py() * pi_minus.Py());
@@ -162,7 +179,7 @@ void task6()
     Ks_polar->Draw();
 
     Double_t bin_p = Double_t(cnt) / N;
-    std :: cout << Double_t(cnt) / N <<  " +- " << TMath::Sqrt(bin_p * (1 - bin_p)) << std :: endl;
+    std :: cout << "efficency: " << Double_t(cnt) / N <<  " +- " << TMath::Sqrt(bin_p * (1 - bin_p)) << std :: endl;
     
 
 }
